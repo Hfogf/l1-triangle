@@ -1,0 +1,14 @@
+.DS_Store
+Thumbs.db
+node_modules/
+.env
+*.log
+dist/
+build/
+/.cache
+/.parcel-cache
+.vscode/
+__pycache__/
+*.pyc
+/.idea
+coverage/
