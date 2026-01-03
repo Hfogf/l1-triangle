@@ -716,16 +716,16 @@ body {
 
 .eyebrow {
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: var(--accent-orange);
-  font-size: 0.75rem;
-  font-weight: 800;
-  margin-bottom: 0.8rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  margin-bottom: 0.7rem;
   display: inline-block;
-  padding: 0.35rem 0.9rem;
-  background: rgba(255, 107, 61, 0.12);
+  padding: 0.3rem 0.8rem;
+  background: rgba(255, 107, 61, 0.1);
   border-radius: 50px;
-  border: 1px solid rgba(255, 107, 61, 0.25);
+  border: 1px solid rgba(255, 107, 61, 0.2);
 }
 
 .products-grid {
@@ -1193,40 +1193,40 @@ body {
 .admin-page {
   background: linear-gradient(180deg, #0a0f1e 0%, #141824 100%);
   min-height: 100vh;
-  padding: 3rem 0 4rem;
+  padding: 2rem 0 3rem;
 }
 
 .admin-hero {
-  margin-bottom: 2.5rem;
+  margin-bottom: 2rem;
   text-align: center;
-  max-width: 600px;
+  max-width: 500px;
   margin-left: auto;
   margin-right: auto;
 }
 
 .admin-hero .section-title {
-  font-size: 2rem;
-  font-weight: 700;
-  margin-bottom: 0.8rem;
-  text-shadow: 0 0 30px rgba(255, 107, 61, 0.25);
-  letter-spacing: -0.02em;
+  font-size: 1.6rem;
+  font-weight: 600;
+  margin-bottom: 0.6rem;
+  text-shadow: none;
+  letter-spacing: -0.01em;
 }
 
 .admin-hero .section-subtitle {
-  font-size: 1rem;
-  color: rgba(176, 184, 193, 0.9);
+  font-size: 0.9rem;
+  color: rgba(176, 184, 193, 0.75);
   font-weight: 400;
 }
 
 .admin-card {
-  background: linear-gradient(135deg, rgba(36, 45, 61, 0.6) 0%, rgba(42, 52, 70, 0.5) 100%);
-  border: 1px solid rgba(255, 107, 61, 0.15);
-  border-radius: 20px;
-  padding: 2.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(10px);
-  max-width: 700px;
+  background: rgba(36, 45, 61, 0.5);
+  border: 1px solid rgba(255, 107, 61, 0.12);
+  border-radius: 16px;
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(8px);
+  max-width: 500px;
   margin-left: auto;
   margin-right: auto;
 }
@@ -1259,18 +1259,18 @@ body {
 }
 
 .admin-card h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 1.25rem;
+  font-weight: 600;
   color: var(--text-primary);
-  margin-bottom: 0.8rem;
-  letter-spacing: -0.02em;
+  margin-bottom: 0.7rem;
+  letter-spacing: -0.01em;
 }
 
 .admin-desc {
-  color: rgba(176, 184, 193, 0.85);
-  margin: 0 0 1.8rem;
-  font-size: 0.95rem;
-  line-height: 1.6;
+  color: rgba(176, 184, 193, 0.7);
+  margin: 0 0 1.5rem;
+  font-size: 0.88rem;
+  line-height: 1.55;
 }
 
 .admin-form {
@@ -1281,13 +1281,13 @@ body {
 
 .admin-form input,
 .admin-form textarea {
-  background: rgba(15, 20, 31, 0.6);
-  border: 1px solid rgba(255, 107, 61, 0.2);
+  background: rgba(15, 20, 31, 0.5);
+  border: 1px solid rgba(255, 107, 61, 0.15);
   color: var(--text-primary);
-  padding: 1rem 1.2rem;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  transition: all 0.3s ease;
+  padding: 0.85rem 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  transition: all 0.25s ease;
   font-family: inherit;
 }
 
@@ -1295,8 +1295,8 @@ body {
 .admin-form textarea:focus {
   outline: none;
   border-color: var(--accent-orange);
-  background: rgba(15, 20, 31, 0.8);
-  box-shadow: 0 0 0 3px rgba(255, 107, 61, 0.1);
+  background: rgba(15, 20, 31, 0.7);
+  box-shadow: 0 0 0 2px rgba(255, 107, 61, 0.08);
 }
 
 .admin-form input::placeholder,
@@ -1306,17 +1306,17 @@ body {
 
 .admin-form .btn-shop-now {
   margin-top: 0.5rem;
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  box-shadow: 0 8px 24px rgba(255, 107, 61, 0.35);
+  padding: 0.85rem 1.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  box-shadow: 0 6px 20px rgba(255, 107, 61, 0.3);
   width: 100%;
 }
 
 .admin-form .btn-shop-now:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 32px rgba(255, 107, 61, 0.45);
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(255, 107, 61, 0.4);
 }
 
 .admin-inline {
@@ -1346,14 +1346,14 @@ body {
 
 .admin-error {
   color: var(--accent-orange);
-  font-weight: 600;
-  font-size: 0.9rem;
-  min-height: 1.2rem;
-  margin-top: 0.8rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  min-height: 1rem;
+  margin-top: 0.6rem;
   text-align: center;
-  padding: 0.5rem;
-  border-radius: 8px;
-  background: rgba(255, 107, 61, 0.08);
+  padding: 0.4rem;
+  border-radius: 6px;
+  background: rgba(255, 107, 61, 0.06);
 }
 
 .admin-hidden {
