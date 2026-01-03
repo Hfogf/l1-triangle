@@ -1,4 +1,4 @@
-// Language switcher: updates static texts and notifies React parts via event
+
 (function(){
   const DEFAULT = 'fr';
   const key = 'lang';
@@ -23,14 +23,14 @@
   function setStored(l){ localStorage.setItem(key, l); }
 
   function applyLang(l){
-    // nav links
+
     document.querySelectorAll('[data-i18n]').forEach(el=>{
       const key = el.getAttribute('data-i18n');
       const parts = key.split('.');
       let val = translations;
       parts.forEach(p=>{ if(val) val = val[p]; });
       if(val && val[l]){
-        // if element is cart button we keep count suffix
+       
         if(el.id === 'open-cart'){
           const cnt = el.textContent.match(/\((\d+)\)/);
           const suffix = cnt ? ` (${cnt[1]})` : '';
@@ -39,7 +39,6 @@
       }
     });
 
-    // hero texts
     const lead = document.querySelector('.hero .lead');
     if(lead) lead.textContent = translations.hero.lead[l];
     const cta1 = document.querySelector('.hero .hero-cta .btn.primary');
@@ -47,13 +46,13 @@
     const cta2 = document.querySelector('.hero .hero-cta .btn:not(.primary)');
     if(cta2) cta2.textContent = translations.hero.ctaContact[l];
 
-    // categories section
+
     const catTitle = document.querySelector('#produits-html h2');
     if(catTitle) catTitle.textContent = translations.sections.categoriesTitle[l];
-    // cards
+   
     const cards = document.querySelectorAll('.produit-card');
     if(cards && cards.length>=3){
-      // assume order: manettes, monitors, vape
+  
       const keys = ['manettes','monitors','vape'];
       cards.forEach((c,i)=>{
         const k = keys[i];
@@ -64,18 +63,18 @@
       });
     }
 
-    // set button label
+    
     if(btn) btn.textContent = (l === 'fr' ? 'FR ▾' : (l === 'en' ? 'EN ▾' : 'CR ▾'));
 
-    // notify React parts
+
     window.dispatchEvent(new CustomEvent('languageChange', { detail: { lang: l } }));
   }
 
-  // initialize
+  
   const initial = getStored();
   applyLang(initial);
 
-  // UI interactions
+
   btn.addEventListener('click', ()=>{
     const visible = list.getAttribute('aria-hidden') === 'false';
     list.setAttribute('aria-hidden', visible ? 'true' : 'false');
@@ -89,7 +88,7 @@
     list.setAttribute('aria-hidden','true');
   });
 
-  // close dropdown on outside click
+
   document.addEventListener('click', (e)=>{
     if(!switcher.contains(e.target)) list.setAttribute('aria-hidden','true');
   });
