@@ -53,25 +53,24 @@
               <input type="text" name="meta" placeholder="Meta (ex: En stock · Livraison 24-48h)" />
               <input type="text" name="category" placeholder="Catégorie (ex: manettes)" required />
               <input type="number" name="price" placeholder="Prix HTG" step="0.01" min="0" />
+              <input type="url" name="image" placeholder="URL de l'image du produit" />
               <input type="text" name="badge" placeholder="Badge (Nouveau, Top vente...)" />
               <label class="admin-inline"><input type="checkbox" name="badgeAlt" /> Badge violet</label>
               <input type="url" name="link" placeholder="Lien (optionnel, ex: WhatsApp)" />
-              <button type="submit" class="btn-secondary">Enregistrer (local)</button>
+              <button type="submit" class="btn-secondary">Ajouter le produit</button>
             </form>
-            <p class="admin-hint">Ces données sont stockées localement pour prévisualisation. Connectez l'API pour publier.</p>
+            <p class="admin-hint">Les produits sont sauvegardés et visibles sur le site instantanément.</p>
           </div>
 
           <div class="admin-panel">
-            <h3>Produits en brouillon</h3>
+            <h3>Produits publiés</h3>
             <div id="product-list" class="admin-list"></div>
           </div>
 
           <div class="admin-panel">
-            <h3>Commandes (aperçu)</h3>
-            <p class="admin-desc">Suivi des commandes via l'API (à connecter). En attendant, tableau fictif.</p>
-            <div id="order-list" class="admin-list">
-              <p class="admin-hint">Connectez l'API commandes pour afficher les vrais statuts.</p>
-            </div>
+            <h3>Commandes</h3>
+            <p class="admin-desc">Liste des commandes reçues via le panier.</p>
+            <div id="order-list" class="admin-list"></div>
           </div>
         </div>
       </section>
