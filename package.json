@@ -1,0 +1,21 @@
+{
+  "name": "l1-triangle",
+  "version": "1.0.0",
+  "description": "L1-TRIANGLE - La nouvelle référence du gaming en Haïti",
+  "main": "index.html",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "echo 'Build complete'",
+    "deploy": "netlify deploy --prod"
+  },
+  "keywords": [
+    "gaming",
+    "ecommerce",
+    "haiti"
+  ],
+  "author": "L1-TRIANGLE",
+  "license": "MIT",
+  "devDependencies": {
+    "netlify-cli": "^17.0.0"
+  }
+}
