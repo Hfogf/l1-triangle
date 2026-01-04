@@ -1,0 +1,13 @@
+{
+  "name": "l1-triangle",
+  "version": "1.0.0",
+  "description": "L1-TRIANGLE Gaming Store - Backend + Frontend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": ["gaming", "haiti"],
+  "author": "",
+  "license": "ISC"
+}

@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>L1-TRIANGLE — La nouvelle référence du gaming en Haïti</title>
     <link rel="stylesheet" href="css/styles.css" />
-    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
-    <link rel="manifest" href="/assets/site.webmanifest">
     <meta name="application-name" content="L1-TRIANGLE" />
     <meta property="og:site_name" content="L1-TRIANGLE" />
   </head>
@@ -199,18 +197,9 @@
       </div>
     </section>
 
-    <!-- Featured Products Placeholder for API -->
-    <section class="products-section" id="produits" aria-label="Produits vedettes">
+    <!-- Products Section -->
+    <section class="products-section" id="produits" aria-label="Nos produits">
       <div class="container">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">Bientôt connecté à l'API</p>
-            <h2 class="section-title">Produits vedettes</h2>
-            <p class="section-subtitle">Affichage dynamique dès l'ajout de l'API. En attendant, voici un aperçu.</p>
-          </div>
-          <a class="btn-secondary" href="https://wa.me/50939945794" target="_blank" rel="noreferrer">Parler au support</a>
-        </div>
-
         <div id="products-grid" class="products-grid" aria-live="polite"></div>
       </div>
     </section>
@@ -357,7 +346,22 @@
       <div class="cart-body" id="cart-items"></div>
       <div class="cart-footer">
         <div class="cart-total">Total: <span id="cart-total">0</span> HTG</div>
-        <a class="btn-secondary cart-checkout" href="https://wa.me/50939945794" target="_blank" rel="noreferrer">Commander sur WhatsApp</a>
+        <div class="cart-actions">
+          <a class="cart-btn cart-btn-whatsapp" href="https://wa.me/50939945794" target="_blank" rel="noreferrer">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.149-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.67-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-.1.683.201 1.05.3.366.745.801 1.309 1.27 1.384 1.239 2.392 2.018 3.633 2.574 1.241.557 2.4.473 3.267-.158.869-.632 1.341-1.616 1.483-2.558.142-.942.131-1.837-.05-2.426-.181.5-.55 1.5-2.16 1.5z"/>
+              <path d="M12.002 21.501l-8.004 0c-2.206 0-4.002-1.799-4.002-4.002v-14.497c0-2.206 1.799-4.002 4.002-4.002l16.004 0c2.207 0 4.002 1.799 4.002 4.002v14.497c0 2.206-1.799 4.002-4.002 4.002zm0-19.5l-8.004 0c-0.551 0-1 0.45-1 1v14.497c0 0.551 0.449 1 1 1l16.004 0c0.551 0 1-0.449 1-1v-14.497c0-0.551-0.449-1-1-1z"/>
+            </svg>
+            Commander par WhatsApp
+          </a>
+          <a class="cart-btn cart-btn-email" href="mailto:l1triangle.info@gmail.com?subject=Commande%20L1-TRIANGLE">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            Commander par Email
+          </a>
+        </div>
       </div>
     </aside>
 
@@ -409,7 +413,7 @@
 
     <button class="scroll-top-btn" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" aria-label="Remonter">↑</button>
 
-    <script src="js/lang.js"></script>
+    <script src="js/api.js"></script>
     <script src="js/site.js"></script>
   </body>
 </html>

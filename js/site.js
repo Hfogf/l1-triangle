@@ -17,18 +17,17 @@
   const fallbackProducts = [];
 
   async function fetchProducts() {
-    // Placeholder pour future API : remplacer l\'URL par votre endpoint
-    const API_URL = '/api/products';
-    try {
-      const res = await fetch(API_URL, { headers:{ 'Accept':'application/json' } });
-      if(!res.ok) throw new Error('API non disponible');
-      const data = await res.json();
-      if(!Array.isArray(data) || !data.length) throw new Error('Données vides');
-      return data.map(normalizeFromApi);
-    } catch(err){
-      console.warn('Fallback produits utilisé:', err.message);
-      return fallbackProducts;
+    // Charger les produits depuis l'API
+    if(window.L1API){
+      try {
+        const products = await window.L1API.getProducts();
+        return products.map(normalizeFromApi);
+      } catch(err){
+        console.warn('Erreur chargement produits:', err);
+        return [];
+      }
     }
+    return [];
   }
 
   function normalizeFromApi(item){
@@ -57,9 +56,9 @@
       const empty = document.createElement('div');
       empty.className = 'empty-products';
       empty.innerHTML = `
-        <p class="empty-eyebrow">Bientôt connecté à l'API</p>
-        <h3 class="empty-title">Les produits arriveront ici dès l'activation de l'API.</h3>
-        <p class="empty-desc">Gardez ce design, il se remplira automatiquement quand les données seront disponibles.</p>
+        <p class="empty-eyebrow">Aucun produit pour le moment</p>
+        <h3 class="empty-title">Revenez bientôt pour découvrir nos produits gaming !</h3>
+        <p class="empty-desc">L'administrateur ajoutera des produits depuis le dashboard admin.</p>
       `;
       productsGrid.appendChild(empty);
       countEl.textContent = '0';
@@ -70,11 +69,17 @@
       const card = document.createElement('article');
       card.className = 'product-card';
       const badgeClass = p.badgeAlt ? 'product-badge alt' : 'product-badge';
+      
+      // Image si disponible
+      const imageHtml = p.image ? `<img src="${p.image}" alt="${p.title}" class="product-image" onerror="this.style.display='none'" />` : '';
+      
       card.innerHTML = `
+        ${imageHtml}
         <div class="${badgeClass}">${p.badge || 'Nouveau'}</div>
         <h3 class="product-title">${p.title}</h3>
         <p class="product-desc">${p.desc}</p>
         <div class="product-meta">${p.meta}</div>
+        <div class="product-price">${formatPrice(p.price)} HTG</div>
         <div class="product-actions">
           <button class="btn-chip" type="button" aria-label="Ajouter au panier">🛒</button>
           <a class="btn-ghost" href="${p.link || 'https://wa.me/50939945794'}" target="_blank" rel="noreferrer">En savoir plus</a>
@@ -116,29 +121,60 @@
     cart.forEach((item, index) => {
       const wrap = document.createElement('div');
       wrap.className = 'cart-item';
+      const itemTotal = (item.price || 0) * (item.quantity || 1);
       wrap.innerHTML = `
         <div class="cart-item-title">${item.title}</div>
         <div class="cart-item-meta">${item.meta || ''}</div>
-        <div class="cart-item-meta">${formatPrice(item.price)} HTG</div>
+        <div class="cart-item-meta">
+          <div style="display:flex;align-items:center;gap:0.5rem;margin:0.5rem 0">
+            <button class="qty-btn" data-action="decrease" data-index="${index}">−</button>
+            <span style="font-weight:700;min-width:2rem;text-align:center">${item.quantity || 1}</span>
+            <button class="qty-btn" data-action="increase" data-index="${index}">+</button>
+          </div>
+          <div style="font-weight:700;color:var(--accent-orange)">${formatPrice(itemTotal)} HTG</div>
+        </div>
         <button class="cart-remove" type="button">Retirer</button>
       `;
       wrap.querySelector('.cart-remove').addEventListener('click', () => removeFromCart(index));
+      wrap.querySelectorAll('.qty-btn').forEach(btn => {
+        btn.addEventListener('click', () => updateQuantity(index, btn.dataset.action));
+      });
       cartItemsContainer.appendChild(wrap);
     });
 
-    const total = cart.reduce((sum, item) => sum + (Number(item.price) || 0), 0);
+    const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
     cartTotalEl.textContent = formatPrice(total);
-    cartCountEl.textContent = String(cart.length);
+    const totalItems = cart.reduce((sum, item) => sum + (item.quantity || 1), 0);
+    cartCountEl.textContent = String(totalItems);
   }
 
   function addToCart(product){
-    cart.push(product);
+    const existingIndex = cart.findIndex(item => item.id === product.id);
+    if(existingIndex >= 0){
+      cart[existingIndex].quantity = (cart[existingIndex].quantity || 1) + 1;
+    } else {
+      cart.push({...product, quantity: 1});
+    }
     renderCart();
     openCart();
   }
 
   function removeFromCart(index){
     cart.splice(index, 1);
+    renderCart();
+  }
+
+  function updateQuantity(index, action){
+    if(action === 'increase'){
+      cart[index].quantity = (cart[index].quantity || 1) + 1;
+    } else if(action === 'decrease'){
+      const newQty = (cart[index].quantity || 1) - 1;
+      if(newQty <= 0){
+        cart.splice(index, 1);
+      } else {
+        cart[index].quantity = newQty;
+      }
+    }
     renderCart();
   }
 
@@ -156,6 +192,91 @@
     cartOverlay.classList.remove('open');
     cartDrawer.setAttribute('aria-hidden', 'true');
     cartOverlay.setAttribute('aria-hidden', 'true');
+  }
+
+  // Sauvegarder la commande lors du checkout
+  async function saveOrderToAPI(){
+    if(!window.L1API || !cart.length) return false;
+    
+    const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
+    
+    const order = {
+      items: cart.map(item => ({
+        id: item.id,
+        title: item.title,
+        price: item.price,
+        quantity: item.quantity || 1
+      })),
+      total: total,
+      customerName: 'Client Web',
+      customerEmail: '',
+      customerPhone: '',
+      status: 'pending'
+    };
+    
+    try {
+      const result = await window.L1API.createOrder(order);
+      if(result.success){
+        // Vider le panier après commande réussie
+        cart.length = 0;
+        renderCart();
+        return true;
+      }
+    } catch(err){
+      console.error('Erreur sauvegarde commande:', err);
+    }
+    return false;
+  }
+
+  // Gérer le checkout WhatsApp
+  async function handleWhatsAppCheckout(e){
+    e.preventDefault();
+    
+    if(!cart.length){
+      alert('Votre panier est vide!');
+      return;
+    }
+    
+    // Construire le message WhatsApp avec quantités et prix AVANT de vider le panier
+    const message = cart.map(item => {
+      const qty = item.quantity || 1;
+      const itemTotal = (item.price || 0) * qty;
+      return `• ${item.title} x${qty} - ${formatPrice(item.price)} HTG = ${formatPrice(itemTotal)} HTG`;
+    }).join('%0A');
+    
+    const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
+    const whatsappUrl = `https://wa.me/50939945794?text=Bonjour, je voudrais commander:%0A%0A${message}%0A%0ATotal: ${formatPrice(total)} HTG`;
+    
+    // Sauvegarder dans l'API après avoir construit le message
+    await saveOrderToAPI();
+    
+    window.open(whatsappUrl, '_blank');
+  }
+
+  // Gérer le checkout Email
+  async function handleEmailCheckout(e){
+    e.preventDefault();
+    
+    if(!cart.length){
+      alert('Votre panier est vide!');
+      return;
+    }
+    
+    // Construire le message email avec quantités AVANT de vider le panier
+    const message = cart.map(item => {
+      const qty = item.quantity || 1;
+      const itemTotal = (item.price || 0) * qty;
+      return `${item.title} x${qty} - ${formatPrice(item.price)} HTG = ${formatPrice(itemTotal)} HTG`;
+    }).join('%0A');
+    
+    const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
+    
+    // Sauvegarder dans l'API après avoir construit le message
+    await saveOrderToAPI();
+    const subject = 'Commande L1-TRIANGLE';
+    const body = `Bonjour,%0A%0AJe voudrais commander:%0A%0A${message}%0A%0ATotal: ${formatPrice(total)} HTG%0A%0AMerci`;
+    
+    window.location.href = `mailto:l1triangle.info@gmail.com?subject=${subject}&body=${body}`;
   }
 
   async function init(){
@@ -177,6 +298,13 @@
     if(cartToggle) cartToggle.addEventListener('click', openCart);
     if(cartClose) cartClose.addEventListener('click', closeCart);
     if(cartOverlay) cartOverlay.addEventListener('click', closeCart);
+    
+    // Attacher les événements aux boutons de commande
+    const whatsappBtn = document.querySelector('.cart-btn-whatsapp');
+    const emailBtn = document.querySelector('.cart-btn-email');
+    if(whatsappBtn) whatsappBtn.addEventListener('click', handleWhatsAppCheckout);
+    if(emailBtn) emailBtn.addEventListener('click', handleEmailCheckout);
+    
     document.addEventListener('keydown', (e) => {
       if(e.key === 'Escape') closeCart();
     });
