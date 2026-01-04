@@ -64,13 +64,26 @@ class L1TriangleAPI {
         return data;
       } catch (error) {
         console.error('Erreur getProducts (local):', error);
+        // Si le serveur échoue, utiliser les produits par défaut
+        if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
+          console.log('✅ Chargement des produits par défaut');
+          return window.DEFAULT_PRODUCTS;
+        }
         return [];
       }
     }
 
     if (this.useFallback) {
       const data = localStorage.getItem('l1_products');
-      return data ? JSON.parse(data) : [];
+      if (data && JSON.parse(data).length > 0) {
+        return JSON.parse(data);
+      }
+      // Si localStorage est vide, utiliser les produits par défaut
+      if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
+        console.log('✅ Chargement des produits par défaut');
+        return window.DEFAULT_PRODUCTS;
+      }
+      return [];
     }
     
     // Firebase fallback
@@ -90,6 +103,11 @@ class L1TriangleAPI {
       return products;
     } catch (error) {
       console.error('❌ Erreur getProducts:', error);
+      // Si tout échoue, utiliser les produits par défaut
+      if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
+        console.log('✅ Chargement des produits par défaut');
+        return window.DEFAULT_PRODUCTS;
+      }
       return [];
     }
   }
