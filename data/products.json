@@ -1,0 +1,74 @@
+{
+  "1": {
+    "id": "1",
+    "title": "Manette PS5 DualSense",
+    "price": 3500,
+    "category": "manettes",
+    "desc": "Manette officielle PlayStation 5 avec retour haptique et gâchettes adaptatives",
+    "meta": "En stock · Livraison 24-48h",
+    "badge": "Stock Limité",
+    "badgeAlt": false,
+    "image": "https://via.placeholder.com/280x200?text=Manette+PS5",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "2": {
+    "id": "2",
+    "title": "Casque Gaming Razer",
+    "price": 2500,
+    "category": "accessoires",
+    "desc": "Casque gaming sans fil avec micro suppression de bruit et son spatial",
+    "meta": "En stock · Autonomie 20h",
+    "badge": "Nouveau",
+    "badgeAlt": true,
+    "image": "https://via.placeholder.com/280x200?text=Casque+Razer",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "3": {
+    "id": "3",
+    "title": "Moniteur 144Hz ASUS",
+    "price": 8500,
+    "category": "moniteurs",
+    "desc": "Écran gaming 27 pouces Full HD 144Hz avec temps de réponse 1ms",
+    "meta": "En stock · FHD / 144Hz",
+    "badge": "Promo",
+    "badgeAlt": false,
+    "image": "https://via.placeholder.com/280x200?text=Moniteur+ASUS",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "4": {
+    "id": "4",
+    "title": "Souris Gaming Logitech",
+    "price": 1500,
+    "category": "accessoires",
+    "desc": "Souris sans fil avec capteur 8000 DPI personnalisable pour FPS",
+    "meta": "En stock · DPI Ajustable",
+    "badge": "Populaire",
+    "badgeAlt": true,
+    "image": "https://via.placeholder.com/280x200?text=Souris+Logitech",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "5": {
+    "id": "5",
+    "title": "Kit Vape Premium",
+    "price": 2000,
+    "category": "kit-vape",
+    "desc": "Kit vape complet avec cartouche rechargeable et batterie intégrée",
+    "meta": "Différents saveurs · Batterie 2000mAh",
+    "badge": "Nouveau",
+    "badgeAlt": false,
+    "image": "https://via.placeholder.com/280x200?text=Kit+Vape",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  },
+  "6": {
+    "id": "6",
+    "title": "Console Nintendo Switch",
+    "price": 12000,
+    "category": "consoles",
+    "desc": "Console portable Nintendo Switch avec dock et joycons",
+    "meta": "En stock · Couleur noire",
+    "badge": "Premium",
+    "badgeAlt": true,
+    "image": "https://via.placeholder.com/280x200?text=Nintendo+Switch",
+    "createdAt": "2024-01-01T00:00:00.000Z"
+  }
+}
