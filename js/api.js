@@ -45,7 +45,12 @@ class L1TriangleAPI {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`);
+        let errorMsg = data.message || data.error || `HTTP ${response.status}`;
+        if (response.status === 403) {
+          errorMsg = '🚫 RLS bloque l\'accès. Exécutez supabase-setup.sql !';
+        }
+        console.error(`❌ Erreur API [${endpoint}]:`, errorMsg, data);
+        throw new Error(errorMsg);
       }
 
       return data;
