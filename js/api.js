@@ -75,20 +75,12 @@ class L1TriangleAPI {
 
     try {
       const products = await this.request(`/products?${params.toString()}`);
-      // Merge with any local fallback entries to avoid losing locally added items
-      const local = this._loadLocal(this.localKeys.products) || [];
-      const byId = new Map();
-      [...products, ...local].forEach(item => {
-        if (!item || !item.id) return;
-        byId.set(item.id, { ...item });
-      });
-      const merged = Array.from(byId.values());
-
-      this.cache.products = merged;
+      // Remote is source of truth; overwrite local cache so tous les périphériques restent alignés
+      this.cache.products = products;
       this.cache.lastUpdate = Date.now();
-      console.log(`✅ ${merged.length} produits chargés (fusion remote + local)`);
-      this._saveLocal(this.localKeys.products, merged);
-      return merged;
+      console.log(`✅ ${products.length} produits chargés (remote)`);
+      this._saveLocal(this.localKeys.products, products);
+      return products;
     } catch (err) {
       const local = this._loadLocal(this.localKeys.products) || [];
       console.warn('⚠️ Fallback produits (localStorage):', local.length);
