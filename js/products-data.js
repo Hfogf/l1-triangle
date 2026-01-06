@@ -1,6 +1,3 @@
-// PRODUITS PAR DÉFAUT - L1-TRIANGLE
-// Ces produits s'affichent automatiquement si le serveur n'est pas disponible
-
 window.DEFAULT_PRODUCTS = [
   {
     "id": "1",

@@ -17,10 +17,10 @@
   const fallbackProducts = [];
 
   async function fetchProducts() {
-    // Charger les produits depuis l'API
-    if(window.L1API){
+    // Charger les produits depuis l'API Supabase
+    if(window.api){
       try {
-        const products = await window.L1API.getProducts();
+        const products = await window.api.getProducts();
         return products.map(normalizeFromApi);
       } catch(err){
         console.warn('Erreur chargement produits:', err);
@@ -33,14 +33,15 @@
   function normalizeFromApi(item){
     return {
       id: item.id || crypto.randomUUID(),
-      title: item.title || item.name || 'Produit',
+      title: item.title || 'Produit',
       desc: item.description || 'Description indisponible.',
-      meta: item.meta || item.stock || 'Disponibilité à confirmer',
+      meta: item.meta || '',
       category: (item.category || 'autres').toLowerCase(),
-      badge: item.badge || 'Nouveau',
+      badge: item.badge || '',
       badgeAlt: item.badgeAlt || false,
       link: item.link || 'https://wa.me/50939945794',
-      price: Number(item.price) || 0
+      price: Number(item.price) || 0,
+      image: item.image || ''
     };
   }
 
@@ -196,7 +197,7 @@
 
   // Sauvegarder la commande lors du checkout
   async function saveOrderToAPI(){
-    if(!window.L1API || !cart.length) return false;
+    if(!window.api || !cart.length) return false;
     
     const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
     
@@ -208,20 +209,17 @@
         quantity: item.quantity || 1
       })),
       total: total,
-      customerName: 'Client Web',
-      customerEmail: '',
-      customerPhone: '',
+      customer_email: '',
+      customer_phone: '',
       status: 'pending'
     };
     
     try {
-      const result = await window.L1API.createOrder(order);
-      if(result.success){
-        // Vider le panier après commande réussie
-        cart.length = 0;
-        renderCart();
-        return true;
-      }
+      const result = await window.api.createOrder(order);
+      // Vider le panier après commande réussie
+      cart.length = 0;
+      renderCart();
+      return true;
     } catch(err){
       console.error('Erreur sauvegarde commande:', err);
     }

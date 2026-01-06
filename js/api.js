@@ -1,395 +1,184 @@
 /**
- * L1-TRIANGLE API - Backend Local + Firebase
- * Fonctionne avec le serveur Node.js local
+ * L1-TRIANGLE API CLIENT
+ * Client JavaScript moderne pour communiquer avec le serveur Node.js
  */
+
+const SUPABASE_URL = 'https://fiofrgaiwosyzrddlhln.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpb2ZyZ2Fpd29zeXpyZGRsaGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1MTE0ODIsImV4cCI6MjA4MTA4NzQ4Mn0.Aj5H-tAA5TVcywF2GY2pO409UbCd0jw7lTdZE6LVpSU';
 
 class L1TriangleAPI {
   constructor() {
-    // Déterminer l'URL du serveur
-    this.localURL = 'http://localhost:3000';
-    this.firebaseURL = 'https://l1-triangle-default-rtdb.firebaseio.com';
-    
-    this.API_PREFIX = '/api';
-    
-    // Test connexion au serveur local
-    this.testConnection();
-    
-    console.log('✅ L1-TRIANGLE API initialisé');
+    this.baseURL = `${SUPABASE_URL}/rest/v1`;
+
+    this.cache = {
+      products: null,
+      orders: null,
+      lastUpdate: null
+    };
+
+    console.log('✅ L1-TRIANGLE API initialisé (Supabase direct)');
+    console.log('🌐 Server:', this.baseURL);
   }
 
-  async testConnection() {
-    try {
-      const response = await fetch(`${this.localURL}/api/products`);
-      if (response.ok) {
-        console.log('✅ Serveur Local connecté:', this.localURL);
-        this.useLocal = true;
-        this.useFallback = false;
-      } else {
-        throw new Error('Serveur indisponible');
+  // ========== HELPERS ==========
+  async request(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const config = {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        apikey: SUPABASE_KEY,
+        Authorization: `Bearer ${SUPABASE_KEY}`,
+        Prefer: 'return=representation',
+        ...options.headers
       }
-    } catch (e) {
-      console.warn('⚠️ Serveur Local indisponible');
-      console.warn('📖 Lancez: node server.js');
-      // Essayer Firebase en fallback
-      this.useLocal = false;
-      this.testFirebase();
-    }
-  }
+    };
 
-  async testFirebase() {
     try {
-      const response = await fetch(`${this.firebaseURL}/.json`);
-      if (response.ok) {
-        console.log('✅ Firebase connecté:', this.firebaseURL);
-        this.useFallback = false;
-      } else {
-        console.warn('⚠️ Firebase non disponible');
-        this.useFallback = true;
+      const response = await fetch(url, config);
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || `HTTP ${response.status}`);
       }
-    } catch (e) {
-      console.warn('⚠️ Mode LOCAL (localStorage) activé');
-      this.useFallback = true;
+
+      return data;
+    } catch (error) {
+      console.error(`❌ Erreur API [${endpoint}]:`, error.message);
+      throw error;
     }
   }
 
   // ========== PRODUITS ==========
-  
-  async getProducts() {
-    if (this.useLocal) {
-      try {
-        const response = await fetch(`${this.localURL}/api/products`);
-        if (!response.ok) throw new Error('Erreur serveur');
-        const data = await response.json();
-        console.log(`✅ ${data.length} produits chargés du serveur local`);
-        return data;
-      } catch (error) {
-        console.error('Erreur getProducts (local):', error);
-        // Si le serveur échoue, utiliser les produits par défaut
-        if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
-          console.log('✅ Chargement des produits par défaut');
-          return window.DEFAULT_PRODUCTS;
-        }
-        return [];
-      }
+  async getProducts(options = {}) {
+    const params = new URLSearchParams();
+    params.set('select', '*');
+
+    if (options.category) {
+      params.set('category', `eq.${options.category}`);
+    } else if (options.search) {
+      const q = options.search;
+      // Recherche sur title/description/category
+      params.set('or', `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
     }
 
-    if (this.useFallback) {
-      const data = localStorage.getItem('l1_products');
-      if (data && JSON.parse(data).length > 0) {
-        return JSON.parse(data);
-      }
-      // Si localStorage est vide, utiliser les produits par défaut
-      if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
-        console.log('✅ Chargement des produits par défaut');
-        return window.DEFAULT_PRODUCTS;
-      }
-      return [];
-    }
+    const products = await this.request(`/products?${params.toString()}`);
+    this.cache.products = products;
+    this.cache.lastUpdate = Date.now();
     
-    // Firebase fallback
-    try {
-      const response = await fetch(`${this.firebaseURL}/products.json`);
-      if (!response.ok) throw new Error('Erreur réseau');
-      
-      const data = await response.json();
-      if (!data) return [];
-      
-      const products = Object.entries(data).map(([key, value]) => ({
-        ...value,
-        firebaseKey: key
-      }));
-      
-      console.log(`✅ ${products.length} produits chargés depuis Firebase`);
-      return products;
-    } catch (error) {
-      console.error('❌ Erreur getProducts:', error);
-      // Si tout échoue, utiliser les produits par défaut
-      if (window.DEFAULT_PRODUCTS && window.DEFAULT_PRODUCTS.length > 0) {
-        console.log('✅ Chargement des produits par défaut');
-        return window.DEFAULT_PRODUCTS;
-      }
-      return [];
-    }
+    console.log(`✅ ${products.length} produits chargés`);
+    return products;
   }
 
-  async addProduct(product) {
-    if (this.useLocal) {
-      try {
-        const response = await fetch(`${this.localURL}/api/products`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(product)
-        });
-        if (!response.ok) throw new Error('Erreur serveur');
-        const result = await response.json();
-        console.log('✅ Produit ajouté au serveur local');
-        return { success: true, data: result };
-      } catch (error) {
-        console.error('Erreur addProduct (local):', error);
-        return { success: false, error: error.message };
-      }
-    }
+  async getProduct(id) {
+    const items = await this.request(`/products?id=eq.${id}&select=*`);
+    return items[0] || null;
+  }
 
-    if (this.useFallback) {
-      try {
-        const products = await this.getProducts();
-        const newProduct = {
-          id: Date.now().toString(),
-          ...product,
-          createdAt: new Date().toISOString(),
-          status: 'active'
-        };
-        products.push(newProduct);
-        localStorage.setItem('l1_products', JSON.stringify(products));
-        console.log('✅ Produit ajouté (LOCAL)');
-        return { success: true, data: newProduct };
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-    
-    // Firebase fallback
-    try {
-      if (!product.title || !product.desc || !product.category || !product.image) {
-        throw new Error('Données incomplètes');
-      }
-
-      const newProduct = {
-        id: Date.now().toString(),
-        ...product,
-        createdAt: new Date().toISOString(),
-        status: 'active'
-      };
-
-      const response = await fetch(`${this.firebaseURL}/products.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newProduct)
-      });
-
-      if (!response.ok) throw new Error('Échec ajout');
-
-      const result = await response.json();
-      console.log('✅ Produit sauvegardé sur Firebase:', newProduct.id);
-      
-      return { 
-        success: true, 
-        data: { ...newProduct, firebaseKey: result.name }
-      };
-    } catch (error) {
-      console.error('❌ Erreur addProduct:', error);
-      return { success: false, error: error.message };
-    }
+  async createProduct(product) {
+    const result = await this.request('/products', {
+      method: 'POST',
+      body: JSON.stringify(product)
+    });
+    this.cache.products = null;
+    return result[0];
   }
 
   async updateProduct(id, updates) {
-    if (this.useFallback) {
-      try {
-        const products = await this.getProducts();
-        const index = products.findIndex(p => p.id === id);
-        if (index === -1) throw new Error('Produit introuvable');
-        products[index] = { ...products[index], ...updates };
-        localStorage.setItem('l1_products', JSON.stringify(products));
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-    
-    try {
-      const products = await this.getProducts();
-      const product = products.find(p => p.id === id);
-      
-      if (!product) {
-        return { success: false, error: 'Produit non trouvé' };
-      }
-
-      const updatedProduct = {
-        ...product,
-        ...updates,
-        updatedAt: new Date().toISOString()
-      };
-
-      const { firebaseKey, ...productData } = updatedProduct;
-
-      const response = await fetch(
-        `${this.firebaseURL}${this.PRODUCTS_PATH}/${firebaseKey}.json`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData)
-        }
-      );
-
-      if (!response.ok) throw new Error('Échec mise à jour');
-
-      console.log('✅ Produit mis à jour sur Firebase:', id);
-      return { success: true, data: updatedProduct };
-    } catch (error) {
-      console.error('❌ Erreur updateProduct:', error);
-      return { success: false, error: error.message };
-    }
+    const result = await this.request(`/products?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    });
+    this.cache.products = null;
+    return result[0];
   }
 
   async deleteProduct(id) {
-    if (this.useFallback) {
-      try {
-        const products = await this.getProducts();
-        const filtered = products.filter(p => p.id !== id);
-        localStorage.setItem('l1_products', JSON.stringify(filtered));
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-    
-    try {
-      const products = await this.getProducts();
-      const product = products.find(p => p.id === id);
-      
-      if (!product) {
-        return { success: false, error: 'Produit non trouvé' };
-      }
+    await this.request(`/products?id=eq.${id}`, {
+      method: 'DELETE'
+    });
+    this.cache.products = null;
+    return { success: true };
+  }
 
-      const response = await fetch(
-        `${this.firebaseURL}${this.PRODUCTS_PATH}/${product.firebaseKey}.json`,
-        { method: 'DELETE' }
-      );
-
-      if (!response.ok) throw new Error('Échec suppression');
-
-      console.log('✅ Produit supprimé de Firebase:', id);
-      return { success: true };
-    } catch (error) {
-      console.error('❌ Erreur deleteProduct:', error);
-      return { success: false, error: error.message };
-    }
+  async bulkUpdateProducts(updates) {
+    // Non utilisé avec Supabase direct
+    throw new Error('bulkUpdateProducts non supporté en mode Supabase direct');
   }
 
   // ========== COMMANDES ==========
+  async getOrders(status = null) {
+    const params = new URLSearchParams();
+    params.set('select', '*');
+    if (status) params.set('status', `eq.${status}`);
 
-  async getOrders() {
-    if (this.useFallback) {
-      const data = localStorage.getItem('l1_orders');
-      return data ? JSON.parse(data) : [];
-    }
-    
-    try {
-      const response = await fetch(`${this.firebaseURL}${this.ORDERS_PATH}.json`);
-      if (!response.ok) throw new Error('Erreur réseau');
-      
-      const data = await response.json();
-      if (!data) return [];
-      
-      const orders = Object.entries(data).map(([key, value]) => ({
-        ...value,
-        firebaseKey: key
-      }));
-      
-      console.log(`✅ ${orders.length} commandes chargées depuis Firebase`);
-      return orders;
-    } catch (error) {
-      console.error('❌ Erreur getOrders:', error);
-      return [];
-    }
+    const orders = await this.request(`/orders?${params.toString()}`);
+    this.cache.orders = orders;
+    console.log(`✅ ${orders.length} commandes chargées`);
+    return orders;
+  }
+
+  async getOrder(id) {
+    const orders = await this.request(`/orders?id=eq.${id}&select=*`);
+    return orders[0] || null;
   }
 
   async createOrder(order) {
-    if (this.useFallback) {
-      try {
-        const orders = await this.getOrders();
-        const newOrder = {
-          id: Date.now().toString(),
-          ...order,
-          createdAt: new Date().toISOString(),
-          status: order.status || 'pending'
-        };
-        orders.push(newOrder);
-        localStorage.setItem('l1_orders', JSON.stringify(orders));
-        return { success: true, data: newOrder };
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
-    }
-    
-    try {
-      const newOrder = {
-        id: Date.now().toString(),
-        ...order,
-        createdAt: new Date().toISOString(),
-        status: order.status || 'pending'
-      };
-
-      const response = await fetch(`${this.firebaseURL}${this.ORDERS_PATH}.json`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newOrder)
-      });
-
-      if (!response.ok) throw new Error('Échec création');
-
-      const result = await response.json();
-      console.log('✅ Commande sauvegardée sur Firebase:', newOrder.id);
-      
-      return { 
-        success: true, 
-        data: { ...newOrder, firebaseKey: result.name }
-      };
-    } catch (error) {
-      console.error('❌ Erreur createOrder:', error);
-      return { success: false, error: error.message };
-    }
+    const result = await this.request('/orders', {
+      method: 'POST',
+      body: JSON.stringify(order)
+    });
+    this.cache.orders = null;
+    return result[0];
   }
 
   async updateOrder(id, updates) {
-    if (this.useFallback) {
-      try {
-        const orders = await this.getOrders();
-        const index = orders.findIndex(o => o.id === id);
-        if (index === -1) throw new Error('Commande introuvable');
-        orders[index] = { ...orders[index], ...updates };
-        localStorage.setItem('l1_orders', JSON.stringify(orders));
-        return { success: true };
-      } catch (error) {
-        return { success: false, error: error.message };
-      }
+    const result = await this.request(`/orders?id=eq.${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    });
+    this.cache.orders = null;
+    return result[0];
+  }
+
+  async deleteOrder(id) {
+    await this.request(`/orders?id=eq.${id}`, {
+      method: 'DELETE'
+    });
+    this.cache.orders = null;
+    return { success: true };
+  }
+
+  // ========== STATISTIQUES ==========
+  async getStats() {
+    const products = await this.request('/products?select=*');
+    const orders = await this.request('/orders?select=*');
+
+    return {
+      totalProducts: products.length,
+      totalOrders: orders.length,
+      pendingOrders: orders.filter(o => o.status === 'pending').length,
+      completedOrders: orders.filter(o => o.status === 'completed').length
+    };
+  }
+
+  // ========== CACHE ==========
+  getCachedProducts() {
+    if (this.cache.products && Date.now() - this.cache.lastUpdate < 60000) {
+      return this.cache.products;
     }
-    
-    try {
-      const orders = await this.getOrders();
-      const order = orders.find(o => o.id === id);
-      
-      if (!order) {
-        return { success: false, error: 'Commande non trouvée' };
-      }
+    return null;
+  }
 
-      const updatedOrder = {
-        ...order,
-        ...updates,
-        updatedAt: new Date().toISOString()
-      };
-
-      const { firebaseKey, ...orderData } = updatedOrder;
-
-      const response = await fetch(
-        `${this.firebaseURL}${this.ORDERS_PATH}/${firebaseKey}.json`,
-        {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(orderData)
-        }
-      );
-
-      if (!response.ok) throw new Error('Échec mise à jour');
-
-      console.log('✅ Commande mise à jour sur Firebase:', id);
-      return { success: true, data: updatedOrder };
-    } catch (error) {
-      console.error('❌ Erreur updateOrder:', error);
-      return { success: false, error: error.message };
-    }
+  clearCache() {
+    this.cache = {
+      products: null,
+      orders: null,
+      lastUpdate: null
+    };
+    console.log('🗑️ Cache vidé');
   }
 }
 
-// Instance globale
-window.L1API = new L1TriangleAPI();
+// Créer l'instance globale
+window.api = new L1TriangleAPI();
