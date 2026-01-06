@@ -21,12 +21,14 @@
     if(window.api){
       try {
         const products = await window.api.getProducts();
+        console.log('✅ Produits chargés:', products.length);
         return products.map(normalizeFromApi);
       } catch(err){
-        console.warn('Erreur chargement produits:', err);
+        console.error('❌ Erreur chargement produits:', err);
         return [];
       }
     }
+    console.warn('⚠️ API non disponible');
     return [];
   }
 
@@ -311,17 +313,21 @@
   // Optimisation mobile : pause/masquer la vidéo si data saver ou petit écran
   function optimizeMedia(){
     const video = document.querySelector('.hero-video');
-    const isDataSaver = navigator.connection && navigator.connection.saveData;
     if(!video) return;
+    
+    const isDataSaver = navigator.connection && navigator.connection.saveData;
+    
     // Respect data saver: ne pas auto-play mais rester visible
     if(isDataSaver){
       try{ video.pause(); }catch{}
       video.removeAttribute('autoplay');
-      video.style.display = '';
-    } else {
-      // Assurer visibilité mobile
-      video.style.display = '';
     }
+    
+    // Assurer visibilité et gérer erreurs de chargement
+    video.style.display = '';
+    video.addEventListener('error', function() {
+      console.warn('⚠️ Vidéo principale non disponible, fallback activé');
+    }, { once: true });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
