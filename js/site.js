@@ -311,12 +311,16 @@
   // Optimisation mobile : pause/masquer la vidéo si data saver ou petit écran
   function optimizeMedia(){
     const video = document.querySelector('.hero-video');
-    const isSmall = window.matchMedia('(max-width: 768px)').matches;
     const isDataSaver = navigator.connection && navigator.connection.saveData;
-    if(video && (isSmall || isDataSaver)){
-      video.pause();
+    if(!video) return;
+    // Respect data saver: ne pas auto-play mais rester visible
+    if(isDataSaver){
+      try{ video.pause(); }catch{}
       video.removeAttribute('autoplay');
-      video.style.display = 'none';
+      video.style.display = '';
+    } else {
+      // Assurer visibilité mobile
+      video.style.display = '';
     }
   }
 
