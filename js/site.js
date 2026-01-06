@@ -35,7 +35,7 @@
   function normalizeFromApi(item){
     return {
       id: item.id || crypto.randomUUID(),
-      title: item.title || 'Produit',
+      title: item.title || item.name || 'Produit',
       desc: item.description || 'Description indisponible.',
       meta: item.meta || '',
       category: (item.category || 'autres').toLowerCase(),

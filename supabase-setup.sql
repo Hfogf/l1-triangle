@@ -11,7 +11,8 @@
 CREATE TABLE IF NOT EXISTS products (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  title TEXT NOT NULL,
+  name TEXT NOT NULL,
+  title TEXT,
   description TEXT,
   category TEXT,
   price NUMERIC DEFAULT 0,

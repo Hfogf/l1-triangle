@@ -94,8 +94,9 @@ class L1TriangleAPI {
   }
 
   async createProduct(product) {
-    // Normalize fields: ensure 'title'
+    // Normalize fields: ensure 'name'
     const payload = { ...product };
+    if (payload.title && !payload.name) payload.name = payload.title;
     if (payload.name && !payload.title) payload.title = payload.name;
     try {
       const result = await this.request('/products', {
