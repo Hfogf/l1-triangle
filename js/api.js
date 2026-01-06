@@ -16,6 +16,12 @@ class L1TriangleAPI {
       lastUpdate: null
     };
 
+    // localStorage fallback keys
+    this.localKeys = {
+      products: 'l1_products',
+      orders: 'l1_orders'
+    };
+
     console.log('✅ L1-TRIANGLE API initialisé (Supabase direct)');
     console.log('🌐 Server:', this.baseURL);
   }
@@ -62,12 +68,19 @@ class L1TriangleAPI {
       params.set('or', `title.ilike.%${q}%,description.ilike.%${q}%,category.ilike.%${q}%`);
     }
 
-    const products = await this.request(`/products?${params.toString()}`);
-    this.cache.products = products;
-    this.cache.lastUpdate = Date.now();
-    
-    console.log(`✅ ${products.length} produits chargés`);
-    return products;
+    try {
+      const products = await this.request(`/products?${params.toString()}`);
+      this.cache.products = products;
+      this.cache.lastUpdate = Date.now();
+      console.log(`✅ ${products.length} produits chargés`);
+      // Sync local fallback
+      this._saveLocal(this.localKeys.products, products);
+      return products;
+    } catch (err) {
+      const local = this._loadLocal(this.localKeys.products) || [];
+      console.warn('⚠️ Fallback produits (localStorage):', local.length);
+      return local;
+    }
   }
 
   async getProduct(id) {
@@ -76,29 +89,64 @@ class L1TriangleAPI {
   }
 
   async createProduct(product) {
-    const result = await this.request('/products', {
-      method: 'POST',
-      body: JSON.stringify(product)
-    });
-    this.cache.products = null;
-    return result[0];
+    // Normalize fields: ensure 'title'
+    const payload = { ...product };
+    if (payload.name && !payload.title) payload.title = payload.name;
+    try {
+      const result = await this.request('/products', {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      });
+      this.cache.products = null;
+      return result[0];
+    } catch (err) {
+      // Fallback to localStorage
+      const list = this._loadLocal(this.localKeys.products) || [];
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      const localItem = { id, created_at: now, ...payload };
+      list.push(localItem);
+      this._saveLocal(this.localKeys.products, list);
+      this.cache.products = null;
+      return localItem;
+    }
   }
 
   async updateProduct(id, updates) {
-    const result = await this.request(`/products?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates)
-    });
-    this.cache.products = null;
-    return result[0];
+    try {
+      const result = await this.request(`/products?id=eq.${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      });
+      this.cache.products = null;
+      return result[0];
+    } catch (err) {
+      const list = this._loadLocal(this.localKeys.products) || [];
+      const idx = list.findIndex(p => p.id === id);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...updates };
+        this._saveLocal(this.localKeys.products, list);
+        this.cache.products = null;
+        return list[idx];
+      }
+      throw err;
+    }
   }
 
   async deleteProduct(id) {
-    await this.request(`/products?id=eq.${id}`, {
-      method: 'DELETE'
-    });
-    this.cache.products = null;
-    return { success: true };
+    try {
+      await this.request(`/products?id=eq.${id}`, {
+        method: 'DELETE'
+      });
+      this.cache.products = null;
+      return { success: true };
+    } catch (err) {
+      const list = this._loadLocal(this.localKeys.products) || [];
+      const filtered = list.filter(p => p.id !== id);
+      this._saveLocal(this.localKeys.products, filtered);
+      this.cache.products = null;
+      return { success: true };
+    }
   }
 
   async bulkUpdateProducts(updates) {
@@ -112,10 +160,17 @@ class L1TriangleAPI {
     params.set('select', '*');
     if (status) params.set('status', `eq.${status}`);
 
-    const orders = await this.request(`/orders?${params.toString()}`);
-    this.cache.orders = orders;
-    console.log(`✅ ${orders.length} commandes chargées`);
-    return orders;
+    try {
+      const orders = await this.request(`/orders?${params.toString()}`);
+      this.cache.orders = orders;
+      this._saveLocal(this.localKeys.orders, orders);
+      console.log(`✅ ${orders.length} commandes chargées`);
+      return orders;
+    } catch (err) {
+      const local = this._loadLocal(this.localKeys.orders) || [];
+      console.warn('⚠️ Fallback commandes (localStorage):', local.length);
+      return local;
+    }
   }
 
   async getOrder(id) {
@@ -124,21 +179,44 @@ class L1TriangleAPI {
   }
 
   async createOrder(order) {
-    const result = await this.request('/orders', {
-      method: 'POST',
-      body: JSON.stringify(order)
-    });
-    this.cache.orders = null;
-    return result[0];
+    try {
+      const result = await this.request('/orders', {
+        method: 'POST',
+        body: JSON.stringify(order)
+      });
+      this.cache.orders = null;
+      return result[0];
+    } catch (err) {
+      const list = this._loadLocal(this.localKeys.orders) || [];
+      const id = crypto.randomUUID();
+      const now = new Date().toISOString();
+      const localItem = { id, created_at: now, ...order };
+      list.push(localItem);
+      this._saveLocal(this.localKeys.orders, list);
+      this.cache.orders = null;
+      return localItem;
+    }
   }
 
   async updateOrder(id, updates) {
-    const result = await this.request(`/orders?id=eq.${id}`, {
-      method: 'PATCH',
-      body: JSON.stringify(updates)
-    });
-    this.cache.orders = null;
-    return result[0];
+    try {
+      const result = await this.request(`/orders?id=eq.${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(updates)
+      });
+      this.cache.orders = null;
+      return result[0];
+    } catch (err) {
+      const list = this._loadLocal(this.localKeys.orders) || [];
+      const idx = list.findIndex(o => o.id === id);
+      if (idx >= 0) {
+        list[idx] = { ...list[idx], ...updates };
+        this._saveLocal(this.localKeys.orders, list);
+        this.cache.orders = null;
+        return list[idx];
+      }
+      throw err;
+    }
   }
 
   async deleteOrder(id) {
@@ -177,6 +255,19 @@ class L1TriangleAPI {
       lastUpdate: null
     };
     console.log('🗑️ Cache vidé');
+  }
+
+  // ========== LOCAL STORAGE HELPERS ==========
+  _loadLocal(key) {
+    try {
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch { return null; }
+  }
+  _saveLocal(key, value) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {}
   }
 }
 

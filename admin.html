@@ -58,6 +58,13 @@
                 <input type="url" id="image-url" placeholder="https://..." required>
                 <div class="image-preview empty" id="url-preview">Aperçu</div>
               </div>
+              <div id="upload-tab" class="tab-content">
+                <div class="file-input-wrapper">
+                  <label class="file-input-label" for="image-file">Choisir une image (JPG/PNG)</label>
+                  <input type="file" id="image-file" accept="image/*">
+                </div>
+                <div class="image-preview empty" id="upload-preview">Aperçu</div>
+              </div>
             </div>
             <button type="submit" class="btn-primary">✨ Ajouter</button>
           </form>
@@ -70,56 +77,14 @@
       </div>
     </div>
   </main>
+  <script src="js/api.js"></script>
   <script>
-    // API Supabase directement intégrée
-    const SUPABASE_URL = 'https://fiofrgaiwosyzrddlhln.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpb2ZyZ2Fpd29zeXpyZGRsaGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1MTE0ODIsImV4cCI6MjA4MTA4NzQ4Mn0.Aj5H-tAA5TVcywF2GY2pO409UbCd0jw7lTdZE6LVpSU';
-
-    async function apiRequest(endpoint, options = {}) {
-      const url = `${SUPABASE_URL}/rest/v1${endpoint}`;
-      const config = {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          'apikey': SUPABASE_KEY,
-          'Authorization': `Bearer ${SUPABASE_KEY}`,
-          'Prefer': 'return=representation',
-          ...options.headers
-        }
-      };
-      const response = await fetch(url, config);
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      return await response.json();
-    }
-
-    async function getProducts() {
-      return await apiRequest('/products?select=*');
-    }
-
-    async function createProduct(product) {
-      const result = await apiRequest('/products', {
-        method: 'POST',
-        body: JSON.stringify(product)
-      });
-      return result[0];
-    }
-
-    async function deleteProduct(id) {
-      await apiRequest(`/products?id=eq.${id}`, { method: 'DELETE' });
-      return { success: true };
-    }
-
-    async function getOrders() {
-      return await apiRequest('/orders?select=*');
-    }
-
-    async function updateOrder(id, updates) {
-      const result = await apiRequest(`/orders?id=eq.${id}`, {
-        method: 'PATCH',
-        body: JSON.stringify(updates)
-      });
-      return result[0];
-    }
+    // Utilise l'API unifiée (Supabase + fallback localStorage)
+    async function getProducts(){ return await window.api.getProducts(); }
+    async function createProduct(product){ return await window.api.createProduct(product); }
+    async function deleteProduct(id){ return await window.api.deleteProduct(id); }
+    async function getOrders(){ return await window.api.getOrders(); }
+    async function updateOrder(id, updates){ return await window.api.updateOrder(id, updates); }
 
     // Code Admin
     const ACCESS_CODE='L1_TRIANGLE';
@@ -138,13 +103,39 @@
 
     toggleFormBtn.addEventListener('click',()=>{formPanel.classList.toggle('admin-hidden');formPanel.classList.contains('admin-hidden')||formPanel.scrollIntoView({behavior:'smooth'})});
 
+    // Tabs image (URL vs Upload)
+    document.querySelectorAll('.img-tab').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        document.querySelectorAll('.img-tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        const target=btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-content').forEach(tc=>tc.classList.toggle('active',tc.id===target));
+        // Toggle required on URL input
+        imageUrlInput.required = (target==='url-tab');
+      });
+    });
+
+    // Aperçu via URL
     imageUrlInput.addEventListener('input',e=>{const u=e.target.value.trim(),p=document.getElementById('url-preview');if(!u){p.classList.add('empty');p.innerHTML='Aperçu';uploadedImage=null;return}const i=new Image();i.onload=()=>{p.innerHTML=`<img src="${u}" alt="p">`;p.classList.remove('empty');uploadedImage=u};i.onerror=()=>{p.classList.add('empty');p.innerHTML='⚠️ Erreur'};i.src=u});
 
-    productForm.addEventListener('submit',async e=>{e.preventDefault();if(!uploadedImage){showNotification('❌ Image requise','error');return}try{const fd=new FormData(productForm),p={name:fd.get('title'),description:fd.get('desc'),category:fd.get('category'),price:Number(fd.get('price'))||0,image:uploadedImage};if(!p.name||!p.description||!p.category){showNotification('❌ Remplissez tous les champs','error');return}if(p.price<=0){showNotification('❌ Prix > 0','error');return}await createProduct(p);uploadedImage=null;imageUrlInput.value='';document.getElementById('url-preview').classList.add('empty');document.getElementById('url-preview').innerHTML='Aperçu';await loadProducts();productForm.reset();formPanel.classList.add('admin-hidden');showNotification('✅ Produit ajouté!','success')}catch(err){console.error(err);showNotification('❌ '+err.message,'error')}});
+    // Aperçu via Upload (DataURL)
+    const imageFileInput=document.getElementById('image-file');
+    imageFileInput.addEventListener('change',()=>{
+      const file=imageFileInput.files && imageFileInput.files[0];
+      const prev=document.getElementById('upload-preview');
+      if(!file){prev.classList.add('empty');prev.textContent='Aperçu';uploadedImage=null;return}
+      if(!file.type.startsWith('image/')){prev.classList.add('empty');prev.textContent='⚠️ Fichier non supporté';uploadedImage=null;return}
+      const reader=new FileReader();
+      reader.onload=()=>{uploadedImage=reader.result;prev.classList.remove('empty');prev.innerHTML=`<img src="${uploadedImage}" alt="upload">`;};
+      reader.onerror=()=>{prev.classList.add('empty');prev.textContent='⚠️ Erreur de lecture'};
+      reader.readAsDataURL(file);
+    });
+
+    productForm.addEventListener('submit',async e=>{e.preventDefault();if(!uploadedImage){showNotification('❌ Image requise','error');return}try{const fd=new FormData(productForm),p={title:fd.get('title'),description:fd.get('desc'),category:fd.get('category'),price:Number(fd.get('price'))||0,image:uploadedImage};if(!p.title||!p.description||!p.category){showNotification('❌ Remplissez tous les champs','error');return}if(p.price<=0){showNotification('❌ Prix > 0','error');return}await createProduct(p);uploadedImage=null;imageUrlInput.value='';document.getElementById('url-preview').classList.add('empty');document.getElementById('url-preview').innerHTML='Aperçu';document.getElementById('upload-preview').classList.add('empty');document.getElementById('upload-preview').innerHTML='Aperçu';document.getElementById('image-file').value='';await loadProducts();productForm.reset();formPanel.classList.add('admin-hidden');showNotification('✅ Produit ajouté!','success')}catch(err){console.error(err);showNotification('❌ '+err.message,'error')}});
 
     async function loadProducts(){try{products=await getProducts();renderProducts();updateStats()}catch(err){showNotification('❌ '+err.message,'error')}}
 
-    function renderProducts(){productsGrid.innerHTML='';if(!products.length){productsGrid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem">Aucun produit</p>';return}products.forEach(p=>{const item=document.createElement('div');item.className='product-item';item.innerHTML=`<div class="product-item-image"><img src="${p.image||'https://via.placeholder.com/280x200?text=Image'}" alt="${p.name||p.title}" onerror="this.src='https://via.placeholder.com/280x200?text=No+Image'"></div><div class="product-item-content"><div class="product-item-category">${p.category}</div><div class="product-item-title">${p.name||p.title}</div>${p.description?`<div class="product-item-meta">${p.description}</div>`:''}<div class="product-item-footer" style="margin-top:auto"><div class="product-item-price">${(p.price||0).toLocaleString('fr-FR')} HTG</div><div class="product-item-actions"><button class="btn-danger delete-btn" data-id="${p.id}">🗑️</button></div></div></div>`;item.querySelector('.delete-btn').addEventListener('click',async()=>{if(confirm('Supprimer?')){try{await deleteProduct(p.id);await loadProducts();showNotification('✓ Supprimé','success')}catch(e){showNotification('❌ '+e.message,'error')}}});productsGrid.appendChild(item)})}
+    function renderProducts(){productsGrid.innerHTML='';if(!products.length){productsGrid.innerHTML='<p style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:3rem">Aucun produit</p>';return}products.forEach(p=>{const item=document.createElement('div');item.className='product-item';item.innerHTML=`<div class="product-item-image"><img src="${p.image||'https://via.placeholder.com/280x200?text=Image'}" alt="${p.title||p.name||'Produit'}" onerror="this.src='https://via.placeholder.com/280x200?text=No+Image'"></div><div class="product-item-content"><div class="product-item-category">${p.category||''}</div><div class="product-item-title">${p.title||p.name||'Produit'}</div>${p.description?`<div class="product-item-meta">${p.description}</div>`:''}<div class="product-item-footer" style="margin-top:auto"><div class="product-item-price">${(Number(p.price)||0).toLocaleString('fr-FR')} HTG</div><div class="product-item-actions"><button class="btn-danger delete-btn" data-id="${p.id}">🗑️</button></div></div></div>`;item.querySelector('.delete-btn').addEventListener('click',async()=>{if(confirm('Supprimer?')){try{await deleteProduct(p.id);await loadProducts();showNotification('✓ Supprimé','success')}catch(e){showNotification('❌ '+e.message,'error')}}});productsGrid.appendChild(item)})}
 
     async function loadOrders(){try{orders=await getOrders();renderOrders();updateStats()}catch(err){showNotification('❌ '+err.message,'error')}}
 
