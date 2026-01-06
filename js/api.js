@@ -107,10 +107,9 @@ class L1TriangleAPI {
       });
       this.cache.products = null;
       const created = result[0];
-      // Mirror success to local fallback so UI remains consistent if SELECT is blocked
-      const list = this._loadLocal(this.localKeys.products) || [];
-      list.push(created);
-      this._saveLocal(this.localKeys.products, list);
+      // Vider le cache pour forcer un refresh depuis Supabase
+      localStorage.removeItem(this.localKeys.products);
+      try { localStorage.setItem('l1_sync', Date.now().toString()); } catch {}
       return created;
     } catch (err) {
       // Fallback to localStorage
@@ -133,10 +132,9 @@ class L1TriangleAPI {
       });
       this.cache.products = null;
       const updated = result[0];
-      // Mirror success to local fallback
-      const list = this._loadLocal(this.localKeys.products) || [];
-      const idx = list.findIndex(p => p.id === id);
-      if (idx >= 0) { list[idx] = { ...list[idx], ...updated }; this._saveLocal(this.localKeys.products, list); }
+      // Vider le cache local pour forcer un refresh
+      localStorage.removeItem(this.localKeys.products);
+      try { localStorage.setItem('l1_sync', Date.now().toString()); } catch {}
       return updated;
     } catch (err) {
       const list = this._loadLocal(this.localKeys.products) || [];
@@ -157,12 +155,13 @@ class L1TriangleAPI {
         method: 'DELETE'
       });
       this.cache.products = null;
-      // Mirror success to local fallback
-      const list = this._loadLocal(this.localKeys.products) || [];
-      const filtered = list.filter(p => p.id !== id);
-      this._saveLocal(this.localKeys.products, filtered);
+      // Vider complètement le cache local pour forcer un refresh
+      localStorage.removeItem(this.localKeys.products);
+      // Signaler aux autres onglets/appareils de recharger
+      try { localStorage.setItem('l1_sync', Date.now().toString()); } catch {}
       return { success: true };
     } catch (err) {
+      // Si erreur réseau, on supprime quand même localement
       const list = this._loadLocal(this.localKeys.products) || [];
       const filtered = list.filter(p => p.id !== id);
       this._saveLocal(this.localKeys.products, filtered);
