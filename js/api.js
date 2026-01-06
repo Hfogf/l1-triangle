@@ -98,7 +98,12 @@ class L1TriangleAPI {
         body: JSON.stringify(payload)
       });
       this.cache.products = null;
-      return result[0];
+      const created = result[0];
+      // Mirror success to local fallback so UI remains consistent if SELECT is blocked
+      const list = this._loadLocal(this.localKeys.products) || [];
+      list.push(created);
+      this._saveLocal(this.localKeys.products, list);
+      return created;
     } catch (err) {
       // Fallback to localStorage
       const list = this._loadLocal(this.localKeys.products) || [];
@@ -119,7 +124,12 @@ class L1TriangleAPI {
         body: JSON.stringify(updates)
       });
       this.cache.products = null;
-      return result[0];
+      const updated = result[0];
+      // Mirror success to local fallback
+      const list = this._loadLocal(this.localKeys.products) || [];
+      const idx = list.findIndex(p => p.id === id);
+      if (idx >= 0) { list[idx] = { ...list[idx], ...updated }; this._saveLocal(this.localKeys.products, list); }
+      return updated;
     } catch (err) {
       const list = this._loadLocal(this.localKeys.products) || [];
       const idx = list.findIndex(p => p.id === id);
@@ -139,6 +149,10 @@ class L1TriangleAPI {
         method: 'DELETE'
       });
       this.cache.products = null;
+      // Mirror success to local fallback
+      const list = this._loadLocal(this.localKeys.products) || [];
+      const filtered = list.filter(p => p.id !== id);
+      this._saveLocal(this.localKeys.products, filtered);
       return { success: true };
     } catch (err) {
       const list = this._loadLocal(this.localKeys.products) || [];
@@ -185,7 +199,12 @@ class L1TriangleAPI {
         body: JSON.stringify(order)
       });
       this.cache.orders = null;
-      return result[0];
+      const created = result[0];
+      // Mirror success to local
+      const list = this._loadLocal(this.localKeys.orders) || [];
+      list.push(created);
+      this._saveLocal(this.localKeys.orders, list);
+      return created;
     } catch (err) {
       const list = this._loadLocal(this.localKeys.orders) || [];
       const id = crypto.randomUUID();
@@ -205,7 +224,11 @@ class L1TriangleAPI {
         body: JSON.stringify(updates)
       });
       this.cache.orders = null;
-      return result[0];
+      const updated = result[0];
+      const list = this._loadLocal(this.localKeys.orders) || [];
+      const idx = list.findIndex(o => o.id === id);
+      if (idx >= 0) { list[idx] = { ...list[idx], ...updated }; this._saveLocal(this.localKeys.orders, list); }
+      return updated;
     } catch (err) {
       const list = this._loadLocal(this.localKeys.orders) || [];
       const idx = list.findIndex(o => o.id === id);
