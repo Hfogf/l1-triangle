@@ -94,14 +94,16 @@ class L1TriangleAPI {
   }
 
   async createProduct(product) {
-    // Normalize fields: ensure 'name'
+    // Normalize fields: ensure 'name' and avoid unknown columns
     const payload = { ...product };
     if (payload.title && !payload.name) payload.name = payload.title;
-    if (payload.name && !payload.title) payload.title = payload.name;
+    // Supabase table uses 'name'; we drop extra keys to avoid insert errors
+    const { name, description, category, price, image, badge, meta } = payload;
+    const cleanPayload = { name, description, category, price, image, badge, meta };
     try {
       const result = await this.request('/products', {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(cleanPayload)
       });
       this.cache.products = null;
       const created = result[0];
@@ -115,7 +117,7 @@ class L1TriangleAPI {
       const list = this._loadLocal(this.localKeys.products) || [];
       const id = crypto.randomUUID();
       const now = new Date().toISOString();
-      const localItem = { id, created_at: now, ...payload };
+      const localItem = { id, created_at: now, ...cleanPayload };
       list.push(localItem);
       this._saveLocal(this.localKeys.products, list);
       this.cache.products = null;
