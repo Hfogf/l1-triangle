@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Produits L1-TRIANGLE</title>
+  <style>
+    body { font-family: Arial; padding: 20px; background: #1a1f2e; color: #fff; }
+    .test-section { background: #242d3d; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    button { padding: 10px 20px; margin: 5px; cursor: pointer; background: #ff6b3d; color: #fff; border: none; border-radius: 5px; }
+    pre { background: #0f1419; padding: 10px; border-radius: 5px; overflow-x: auto; }
+    .success { color: #25d366; }
+    .error { color: #e74c3c; }
+  </style>
+</head>
+<body>
+  <h1>🔍 Test Produits L1-TRIANGLE</h1>
+  
+  <div class="test-section">
+    <h2>1. Tester Supabase Connection</h2>
+    <button onclick="testConnection()">Test Connection</button>
+    <pre id="connection-result"></pre>
+  </div>
+  
+  <div class="test-section">
+    <h2>2. Lire tous les produits</h2>
+    <button onclick="testGetProducts()">Lire Produits</button>
+    <pre id="get-result"></pre>
+  </div>
+  
+  <div class="test-section">
+    <h2>3. Ajouter un produit de test</h2>
+    <button onclick="testAddProduct()">Ajouter Produit Test</button>
+    <pre id="add-result"></pre>
+  </div>
+  
+  <div class="test-section">
+    <h2>4. Vérifier localStorage</h2>
+    <button onclick="testLocalStorage()">Check localStorage</button>
+    <button onclick="clearLocalStorage()">Clear localStorage</button>
+    <pre id="local-result"></pre>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    async function testConnection() {
+      const result = document.getElementById('connection-result');
+      result.textContent = '⏳ Test en cours...';
+      try {
+        const response = await fetch('https://fiofrgaiwosyzrddlhln.supabase.co/rest/v1/products?select=count', {
+          headers: {
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpb2ZyZ2Fpd29zeXpyZGRsaGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1MTE0ODIsImV4cCI6MjA4MTA4NzQ4Mn0.Aj5H-tAA5TVcywF2GY2pO409UbCd0jw7lTdZE6LVpSU',
+            'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZpb2ZyZ2Fpd29zeXpyZGRsaGxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU1MTE0ODIsImV4cCI6MjA4MTA4NzQ4Mn0.Aj5H-tAA5TVcywF2GY2pO409UbCd0jw7lTdZE6LVpSU'
+          }
+        });
+        if (response.ok) {
+          result.innerHTML = '<span class="success">✅ Supabase connecté!</span>\nStatus: ' + response.status;
+        } else {
+          result.innerHTML = '<span class="error">❌ Erreur: ' + response.status + '</span>\n' + await response.text();
+        }
+      } catch (err) {
+        result.innerHTML = '<span class="error">❌ Erreur: ' + err.message + '</span>';
+      }
+    }
+
+    async function testGetProducts() {
+      const result = document.getElementById('get-result');
+      result.textContent = '⏳ Lecture en cours...';
+      try {
+        const products = await window.api.getProducts();
+        result.innerHTML = '<span class="success">✅ ' + products.length + ' produits trouvés</span>\n' + JSON.stringify(products, null, 2);
+      } catch (err) {
+        result.innerHTML = '<span class="error">❌ Erreur: ' + err.message + '</span>';
+      }
+    }
+
+    async function testAddProduct() {
+      const result = document.getElementById('add-result');
+      result.textContent = '⏳ Ajout en cours...';
+      try {
+        const testProduct = {
+          title: 'Produit Test ' + Date.now(),
+          description: 'Ceci est un produit de test',
+          category: 'accessoires',
+          price: 1000,
+          image: 'https://via.placeholder.com/300x200?text=Test'
+        };
+        
+        console.log('Ajout produit:', testProduct);
+        const created = await window.api.createProduct(testProduct);
+        console.log('Produit créé:', created);
+        
+        result.innerHTML = '<span class="success">✅ Produit ajouté!</span>\n' + JSON.stringify(created, null, 2);
+        
+        // Vérifier immédiatement
+        setTimeout(async () => {
+          const products = await window.api.getProducts();
+          result.innerHTML += '\n\n📦 Vérification: ' + products.length + ' produits total\n' + 
+            'Dernier produit: ' + JSON.stringify(products[products.length - 1], null, 2);
+        }, 500);
+      } catch (err) {
+        result.innerHTML = '<span class="error">❌ Erreur: ' + err.message + '</span>\n' + err.stack;
+      }
+    }
+
+    function testLocalStorage() {
+      const result = document.getElementById('local-result');
+      const products = localStorage.getItem('l1_products');
+      const orders = localStorage.getItem('l1_orders');
+      
+      result.innerHTML = '📦 localStorage produits:\n' + 
+        (products ? JSON.stringify(JSON.parse(products), null, 2) : 'Vide') +
+        '\n\n📫 localStorage commandes:\n' + 
+        (orders ? JSON.stringify(JSON.parse(orders), null, 2) : 'Vide');
+    }
+
+    function clearLocalStorage() {
+      localStorage.removeItem('l1_products');
+      localStorage.removeItem('l1_orders');
+      document.getElementById('local-result').innerHTML = '<span class="success">✅ localStorage vidé!</span>';
+    }
+  </script>
+</body>
+</html>
