@@ -247,10 +247,14 @@
     const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
     const whatsappUrl = `https://wa.me/50939945794?text=Bonjour, je voudrais commander:%0A%0A${message}%0A%0ATotal: ${formatPrice(total)} HTG`;
     
-    // Sauvegarder dans l'API après avoir construit le message
-    await saveOrderToAPI();
+    // Sauvegarder dans l'API AVANT d'ouvrir WhatsApp
+    const savedSuccessfully = await saveOrderToAPI();
     
-    window.open(whatsappUrl, '_blank');
+    // Attendre un court délai pour s'assurer que la sauvegarde est terminée avant de rediriger
+    setTimeout(() => {
+      window.open(whatsappUrl, '_blank');
+      closeCart();
+    }, 300);
   }
 
   // Gérer le checkout Email
@@ -271,12 +275,16 @@
     
     const total = cart.reduce((sum, item) => sum + ((Number(item.price) || 0) * (item.quantity || 1)), 0);
     
-    // Sauvegarder dans l'API après avoir construit le message
-    await saveOrderToAPI();
+    // Sauvegarder dans l'API AVANT de rediriger
+    const savedSuccessfully = await saveOrderToAPI();
     const subject = 'Commande L1-TRIANGLE';
     const body = `Bonjour,%0A%0AJe voudrais commander:%0A%0A${message}%0A%0ATotal: ${formatPrice(total)} HTG%0A%0AMerci`;
     
-    window.location.href = `mailto:l1triangle.info@gmail.com?subject=${subject}&body=${body}`;
+    // Attendre un court délai pour s'assurer que la sauvegarde est terminée avant de rediriger
+    setTimeout(() => {
+      window.location.href = `mailto:l1triangle.info@gmail.com?subject=${subject}&body=${body}`;
+      closeCart();
+    }, 300);
   }
 
   async function init(){
